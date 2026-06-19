@@ -215,8 +215,15 @@ h2 {
 .tabs {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin: 18px 0;
+}
+
+.tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .tab {
@@ -232,6 +239,43 @@ h2 {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
+}
+
+.calc-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calc-status {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.calc-status.is-pending {
+  color: var(--amber);
+}
+
+.calculate-button {
+  min-width: 112px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 900;
+}
+
+.calculate-button.is-pending {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+.summary-band.is-stale {
+  border-color: #f59e0b;
 }
 
 .tab-panel {
@@ -545,6 +589,10 @@ button:focus-visible {
     width: min(100% - 20px, 1280px);
   }
 
+  .page-shell {
+    padding-bottom: 88px;
+  }
+
   .summary-band,
   .panel {
     padding: 14px;
@@ -569,6 +617,35 @@ button:focus-visible {
 
   .panel-heading {
     display: grid;
+  }
+
+  .tabs {
+    display: block;
+  }
+
+  .tab-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .calc-actions {
+    position: fixed;
+    z-index: 20;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 12px;
+    margin-left: 0;
+    justify-content: space-between;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+    padding: 10px;
+  }
+
+  .calculate-button {
+    min-width: 132px;
   }
 
   .search-input {

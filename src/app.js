@@ -57,6 +57,9 @@ const els = {
   switchBar: document.querySelector("#switchBar"),
   componentList: document.querySelector("#componentList"),
   injectionList: document.querySelector("#injectionList"),
+  calculateButton: document.querySelector("#calculateButton"),
+  calcStatus: document.querySelector("#calcStatus"),
+  summaryBand: document.querySelector(".summary-band"),
 };
 
 let paymentRows = [];
@@ -64,6 +67,7 @@ let lastResult = null;
 let paymentRowsTouched = false;
 let storageReady = false;
 let isApplyingSavedState = false;
+let hasPendingChanges = false;
 
 const STORAGE_KEY = "youthSavingsSwitchCalculator:v1";
 const TAB_NAMES = ["inputs", "history", "rates", "details", "logic"];
@@ -156,7 +160,8 @@ function bindEvents() {
     input.addEventListener("change", () => handleSettingsInput(key));
   });
 
-  els.incomeBracketFields.addEventListener("change", recalculate);
+  els.calculateButton.addEventListener("click", recalculate);
+  els.incomeBracketFields.addEventListener("change", markCalculationStale);
   els.bankSelect.addEventListener("change", () => {
     renderSelectedBank();
     saveState();
@@ -167,7 +172,7 @@ function bindEvents() {
     paymentRows = generateYouthLeapPayments(getSettings());
     paymentRowsTouched = false;
     renderPaymentRows();
-    recalculate();
+    markCalculationStale();
   });
 
   document.querySelector("#resetSavedState").addEventListener("click", resetSavedState);
@@ -180,7 +185,7 @@ function bindEvents() {
       amount: Number(els.inputs.historyMonthlyAmount.value || 0),
     });
     renderPaymentRows();
-    recalculate();
+    markCalculationStale();
   });
 }
 
@@ -189,7 +194,8 @@ function handleSettingsInput(key) {
     paymentRows = generateYouthLeapPayments(getSettings());
     renderPaymentRows();
   }
-  recalculate();
+  renderAfterTaxInline(getSettings());
+  markCalculationStale();
 }
 
 function switchTab(tabName) {
@@ -320,7 +326,7 @@ function resetSavedState() {
 
   renderPaymentRows();
   switchTab("inputs");
-  recalculate();
+  markCalculationStale();
 }
 
 function renderPaymentRows() {
@@ -346,7 +352,7 @@ function renderPaymentRows() {
       paymentRowsTouched = true;
       paymentRows = paymentRows.filter((row) => row.id !== id);
       renderPaymentRows();
-      recalculate();
+      markCalculationStale();
     });
   });
 }
@@ -358,7 +364,7 @@ function handlePaymentRowEdit(event) {
   paymentRowsTouched = true;
   row[event.target.dataset.field] =
     event.target.dataset.field === "amount" ? Number(event.target.value || 0) : event.target.value;
-  recalculate();
+  markCalculationStale();
 }
 
 function renderSelectedBank() {
@@ -405,7 +411,7 @@ function renderBankList() {
 
 function recalculate() {
   const settings = getSettings();
-  els.afterTaxInline.textContent = formatPercent(taxAdjustedAnnualRate(settings.externalPreTaxRate));
+  renderAfterTaxInline(settings);
 
   const validation = validateYouthLeapPayments(paymentRows, settings.youthLeapSignupDate);
   renderValidation(validation);
@@ -418,9 +424,31 @@ function recalculate() {
     els.winnerText.textContent = "입력값 확인 필요";
     els.winnerCaption.textContent = error.message;
   } finally {
+    hasPendingChanges = false;
+    updateCalculationState();
     renderLogic(settings, lastResult, validation);
     saveState();
   }
+}
+
+function renderAfterTaxInline(settings) {
+  els.afterTaxInline.textContent = formatPercent(taxAdjustedAnnualRate(settings.externalPreTaxRate));
+}
+
+function markCalculationStale() {
+  if (isApplyingSavedState) {
+    return;
+  }
+  hasPendingChanges = true;
+  updateCalculationState();
+  saveState();
+}
+
+function updateCalculationState() {
+  els.calcStatus.textContent = hasPendingChanges ? "변경사항 있음" : "계산 완료";
+  els.calcStatus.classList.toggle("is-pending", hasPendingChanges);
+  els.calculateButton.classList.toggle("is-pending", hasPendingChanges);
+  els.summaryBand.classList.toggle("is-stale", hasPendingChanges);
 }
 
 function renderValidation(validation) {

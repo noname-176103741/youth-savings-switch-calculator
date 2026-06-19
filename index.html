@@ -64,11 +64,17 @@
       </section>
 
       <nav class="tabs" aria-label="계산기 탭">
-        <button class="tab is-active" type="button" data-tab="inputs">계산 입력</button>
-        <button class="tab" type="button" data-tab="history">납입 이력</button>
-        <button class="tab" type="button" data-tab="rates">우대금리 확인</button>
-        <button class="tab" type="button" data-tab="details">계산 상세</button>
-        <button class="tab" type="button" data-tab="logic">사용된 논리</button>
+        <div class="tab-list">
+          <button class="tab is-active" type="button" data-tab="inputs">계산 입력</button>
+          <button class="tab" type="button" data-tab="history">납입 이력</button>
+          <button class="tab" type="button" data-tab="rates">우대금리 확인</button>
+          <button class="tab" type="button" data-tab="details">계산 상세</button>
+          <button class="tab" type="button" data-tab="logic">사용된 논리</button>
+        </div>
+        <div class="calc-actions" id="calcActions">
+          <span class="calc-status" id="calcStatus" aria-live="polite">계산 완료</span>
+          <button class="calculate-button" id="calculateButton" type="button">계산하기</button>
+        </div>
       </nav>
 
       <section class="tab-panel is-active" id="tab-inputs">
