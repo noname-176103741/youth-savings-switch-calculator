@@ -6,13 +6,13 @@ import {
   generateYouthLeapPayments,
   taxAdjustedAnnualRate,
   validateYouthLeapPayments,
-} from "./calc.js?v=logic-review-20260619";
+} from "./calc.js?v=default-rates-20260619";
 import {
   SOURCE_LINKS,
   YOUTH_FUTURE_BANKS,
   YOUTH_FUTURE_RULES,
   YOUTH_LEAP_CONTRIBUTION_SNAPSHOT,
-} from "./data.js?v=logic-review-20260619";
+} from "./data.js?v=default-rates-20260619";
 
 const els = {
   inputs: {

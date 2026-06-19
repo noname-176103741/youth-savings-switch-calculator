@@ -1,4 +1,4 @@
-import { INCOME_BRACKETS } from "./calc.js?v=logic-review-20260619";
+import { INCOME_BRACKETS } from "./calc.js?v=default-rates-20260619";
 
 export const SOURCE_LINKS = [
   {
