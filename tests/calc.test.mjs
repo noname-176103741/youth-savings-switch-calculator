@@ -117,10 +117,108 @@ test("youth leap contribution expands from 2025-01", () => {
   assert.equal(calculateYouthLeapContribution(700000, "lte6000", "2025-01-01"), 21000);
 });
 
+test("youth leap income bracket periods roll over after the signup month", () => {
+  const result = calculateComparison(
+    {
+      ...DEFAULT_SETTINGS,
+      youthLeapSignupDate: "2023-07-10",
+      youthLeapExitDate: "2024-08-20",
+      incomeBracketsByYear: ["lte2400", "lte6000", "lte6000", "lte6000", "lte6000"],
+    },
+    [
+      { id: "july", date: "2024-07-31", amount: 700000 },
+      { id: "august", date: "2024-08-01", amount: 700000 },
+    ],
+  );
+  const julyContribution = result.payouts.earlyLeapPayout.contributionEvents.find(
+    (event) => event.month === "2024-07",
+  );
+  const augustContribution = result.payouts.earlyLeapPayout.contributionEvents.find(
+    (event) => event.month === "2024-08",
+  );
+
+  assert.equal(julyContribution.amount, 24000);
+  assert.equal(augustContribution.amount, 21000);
+});
+
 test("youth future contribution types apply rate and cap", () => {
   assert.equal(calculateYouthFutureContribution(500000, "regular"), 30000);
   assert.equal(calculateYouthFutureContribution(500000, "preferred"), 60000);
   assert.equal(calculateYouthFutureContribution(500000, "none"), 0);
+});
+
+test("youth future contribution interest uses a separate contribution rate", () => {
+  const result = calculateComparison(
+    {
+      ...DEFAULT_SETTINGS,
+      futureMonthlyAmount: 500000,
+      futureContributionType: "regular",
+      youthFutureRate: 8,
+      youthFutureContributionRate: 5,
+    },
+    [],
+  );
+
+  const expected = result.payouts.futurePayout.contributionEvents.reduce(
+    (sum, event) =>
+      sum +
+      calculateSegmentedSimpleInterest(
+        event.amount,
+        event.settleDate,
+        result.dates.youthFutureMaturityDate,
+        5,
+      ),
+    0,
+  );
+  const usingDepositRate = result.payouts.futurePayout.contributionEvents.reduce(
+    (sum, event) =>
+      sum +
+      calculateSegmentedSimpleInterest(
+        event.amount,
+        event.settleDate,
+        result.dates.youthFutureMaturityDate,
+        8,
+      ),
+    0,
+  );
+
+  assert.ok(Math.abs(result.payouts.futurePayout.contributionInterest - expected) < 1e-6);
+  assert.ok(Math.abs(result.payouts.futurePayout.contributionInterest - usingDepositRate) > 1000);
+});
+
+test("july 2026 youth leap contribution is included without interest on switch payout", () => {
+  const settings = {
+    ...DEFAULT_SETTINGS,
+    youthLeapSignupDate: "2024-06-29",
+    youthLeapExitDate: "2026-07-27",
+    paymentDay: 1,
+    historyMonthlyAmount: 700000,
+    youthLeapContributionRate: 4.5,
+  };
+  const rows = generateYouthLeapPayments(settings);
+  const result = calculateComparison(settings, rows);
+  const julyContribution = result.payouts.earlyLeapPayout.contributionEvents.find(
+    (event) => event.month === "2026-07",
+  );
+  const contributionInterestBeforeJuly = result.payouts.earlyLeapPayout.contributionEvents
+    .filter((event) => event.month !== "2026-07")
+    .reduce(
+      (sum, event) =>
+        sum +
+        calculateSegmentedSimpleInterest(
+          event.amount,
+          event.settleDate,
+          settings.youthLeapExitDate,
+          settings.youthLeapContributionRate,
+        ),
+      0,
+    );
+
+  assert.equal(julyContribution.amount, 29000);
+  assert.equal(julyContribution.settleDate, "2026-08-10");
+  assert.ok(
+    Math.abs(result.payouts.earlyLeapPayout.contributionInterest - contributionInterestBeforeJuly) < 1e-6,
+  );
 });
 
 test("external pretax rate is adjusted by 15.4 percent tax", () => {

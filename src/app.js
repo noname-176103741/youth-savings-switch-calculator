@@ -6,13 +6,13 @@ import {
   generateYouthLeapPayments,
   taxAdjustedAnnualRate,
   validateYouthLeapPayments,
-} from "./calc.js";
+} from "./calc.js?v=logic-review-20260619";
 import {
   SOURCE_LINKS,
   YOUTH_FUTURE_BANKS,
   YOUTH_FUTURE_RULES,
   YOUTH_LEAP_CONTRIBUTION_SNAPSHOT,
-} from "./data.js";
+} from "./data.js?v=logic-review-20260619";
 
 const els = {
   inputs: {
@@ -30,6 +30,7 @@ const els = {
     youthLeapContributionRateYear4: document.querySelector("#youthLeapContributionRateYear4"),
     youthLeapContributionRateYear5: document.querySelector("#youthLeapContributionRateYear5"),
     youthFutureRate: document.querySelector("#youthFutureRate"),
+    youthFutureContributionRate: document.querySelector("#youthFutureContributionRate"),
     externalPreTaxRate: document.querySelector("#externalPreTaxRate"),
     futureContributionType: document.querySelector("#futureContributionType"),
   },
@@ -226,6 +227,7 @@ function getSettings() {
     youthLeapContributionRateYear4: Number(els.inputs.youthLeapContributionRateYear4.value),
     youthLeapContributionRateYear5: Number(els.inputs.youthLeapContributionRateYear5.value),
     youthFutureRate: Number(els.inputs.youthFutureRate.value),
+    youthFutureContributionRate: Number(els.inputs.youthFutureContributionRate.value),
     externalPreTaxRate: Number(els.inputs.externalPreTaxRate.value),
     futureContributionType: els.inputs.futureContributionType.value,
     incomeBracketsByYear: Array.from(document.querySelectorAll(".income-bracket")).map(
@@ -556,7 +558,7 @@ function renderSources() {
     </div>
     <div class="source-item">
       <strong>청년미래적금 구조</strong>
-      <p>월 최대 ${formatMoney(YOUTH_FUTURE_RULES.monthlyCap)}, 연 ${formatMoney(YOUTH_FUTURE_RULES.yearlyCap)}, ${YOUTH_FUTURE_RULES.months}개월. 일반형 6%, 우대형 12% 정부기여금을 반영합니다.</p>
+      <p>월 최대 ${formatMoney(YOUTH_FUTURE_RULES.monthlyCap)}, 연 ${formatMoney(YOUTH_FUTURE_RULES.yearlyCap)}, ${YOUTH_FUTURE_RULES.months}개월. 일반형 6%, 우대형 12% 정부기여금을 반영하고, 정부기여금 이자는 기본금리 기준으로 별도 계산합니다.</p>
     </div>
     ${SOURCE_LINKS.map(
       (source) =>
@@ -620,7 +622,7 @@ function renderLogic(settings, result, validation) {
       body: [
         "월 납입총액을 기준으로 다음 달 10일 정부기여금이 정산되는 것으로 처리합니다.",
         "2025년 1월 납입분부터 확대 기여금 구조를 적용합니다.",
-        "소득구간은 가입일 기준 1년 단위로 바뀌며, 화면의 1~5년차 선택값을 사용합니다.",
+        "소득구간 1년차는 가입일부터 다음 해 가입월 말일까지, 2년차부터는 매년 가입월 다음 달 1일부터 적용합니다.",
         "2026년 7월 전환 가정에서는 도약계좌 7월 납입분 기여금을 받는 것으로 보되, 정산일이 해지일 이후이면 이자는 0원입니다.",
       ],
     },
@@ -631,6 +633,7 @@ function renderLogic(settings, result, validation) {
         "가입월과 매년 가입월의 납입일 보정은 청년도약계좌와 같은 방식으로 적용합니다.",
         `정부기여금 유형은 ${futureContributionType.label}입니다.`,
         "일반형은 월 납입액의 6%, 월 30,000원 한도이고 우대형은 월 납입액의 12%, 월 60,000원 한도입니다.",
+        `정부기여금 이자는 미래적금 적용 금리와 분리해 ${formatPercent(settings.youthFutureContributionRate)}로 계산합니다.`,
       ],
     },
     {

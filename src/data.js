@@ -1,4 +1,4 @@
-import { INCOME_BRACKETS } from "./calc.js";
+import { INCOME_BRACKETS } from "./calc.js?v=logic-review-20260619";
 
 export const SOURCE_LINKS = [
   {
@@ -31,6 +31,7 @@ export const YOUTH_FUTURE_RULES = {
   monthlyCap: 500000,
   yearlyCap: 6000000,
   months: 36,
+  defaultContributionInterestRate: 5,
   contributionTypes: [
     {
       id: "none",

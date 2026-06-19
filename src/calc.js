@@ -3,6 +3,7 @@ export const YOUTH_LEAP_MONTHLY_CAP = 700000;
 export const YOUTH_LEAP_YEARLY_CAP = 8400000;
 export const YOUTH_FUTURE_MONTHLY_CAP = 500000;
 export const YOUTH_FUTURE_YEARLY_CAP = 6000000;
+export const YOUTH_FUTURE_DEFAULT_CONTRIBUTION_RATE = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const EXPANDED_LEAP_CONTRIBUTION_START = parseDate("2025-01-01");
@@ -83,6 +84,7 @@ export const DEFAULT_SETTINGS = {
   youthLeapContributionRateYear4: 4.5,
   youthLeapContributionRateYear5: 4.5,
   youthFutureRate: 5,
+  youthFutureContributionRate: YOUTH_FUTURE_DEFAULT_CONTRIBUTION_RATE,
   externalPreTaxRate: 4,
   futureContributionType: "regular",
   incomeBracketsByYear: ["lte3600", "lte3600", "lte3600", "lte3600", "lte3600"],
@@ -529,7 +531,7 @@ function calculateYouthFuturePayout({ settings, payments, payoutDate }) {
   return calculateProductPayout({
     payments,
     annualRate: settings.youthFutureRate,
-    contributionAnnualRate: settings.youthFutureRate,
+    contributionAnnualRate: settings.youthFutureContributionRate,
     contributionEvents,
     payoutDate,
   });
@@ -609,12 +611,17 @@ function incomeBracketForDate(dateValue, settings) {
   const date = parseDate(dateValue);
   const signupDate = parseDate(settings.youthLeapSignupDate);
   let index = 0;
-  for (let year = 0; year < 5; year += 1) {
-    if (compareDates(date, addYears(signupDate, year)) >= 0) {
+  for (let year = 1; year < 5; year += 1) {
+    if (compareDates(date, firstDayOfNextMonth(addYears(signupDate, year))) >= 0) {
       index = year;
     }
   }
   return settings.incomeBracketsByYear[Math.min(index, settings.incomeBracketsByYear.length - 1)];
+}
+
+function firstDayOfNextMonth(dateValue) {
+  const date = parseDate(dateValue);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
 }
 
 function anniversaryDateForYear(anchorDate, year) {
@@ -769,6 +776,9 @@ function coerceSettings(input) {
       input.youthLeapContributionRateYear5 ?? DEFAULT_SETTINGS.youthLeapContributionRateYear5,
     ),
     youthFutureRate: Number(input.youthFutureRate ?? DEFAULT_SETTINGS.youthFutureRate),
+    youthFutureContributionRate: Number(
+      input.youthFutureContributionRate ?? DEFAULT_SETTINGS.youthFutureContributionRate,
+    ),
     externalPreTaxRate: Number(input.externalPreTaxRate ?? DEFAULT_SETTINGS.externalPreTaxRate),
     incomeBracketsByYear:
       Array.isArray(input.incomeBracketsByYear) && input.incomeBracketsByYear.length

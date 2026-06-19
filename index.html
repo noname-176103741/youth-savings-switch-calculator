@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>청년도약계좌 vs 청년미래적금 전환 계산기</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./src/styles.css?v=manual-calc-20260619" />
+    <link rel="stylesheet" href="./src/styles.css?v=logic-review-20260619" />
   </head>
   <body>
     <header class="app-header">
@@ -154,6 +154,10 @@
                 <input id="youthFutureRate" type="number" step="0.01" />
               </label>
               <label>
+                미래적금 기여금 이자 금리(%)
+                <input id="youthFutureContributionRate" type="number" step="0.01" />
+              </label>
+              <label>
                 외부 돈 세전 연이율(%)
                 <input id="externalPreTaxRate" type="number" step="0.01" />
               </label>
@@ -261,6 +265,6 @@
       </section>
     </main>
 
-    <script type="module" src="./src/app.js?v=manual-calc-20260619"></script>
+    <script type="module" src="./src/app.js?v=logic-review-20260619"></script>
   </body>
 </html>
