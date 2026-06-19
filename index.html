@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>청년도약계좌 vs 청년미래적금 전환 계산기</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-header__inner">
+        <div>
+          <p class="eyebrow">전환 우위 계산</p>
+          <h1>청년도약계좌 유지 vs 청년미래적금 전환</h1>
+        </div>
+        <div class="header-meta">
+          <span>특별중도해지 2026-07-27</span>
+          <span>미래적금 가입 2026-07-28</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="summary-band" aria-label="계산 결과 요약">
+        <div class="result-main">
+          <div>
+            <p class="result-label">판정</p>
+            <div class="result-title" id="winnerText">계산 중</div>
+            <p class="result-caption" id="winnerCaption"></p>
+          </div>
+          <div class="result-delta" id="differenceText">0원</div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric">
+            <span>추가 납입필요</span>
+            <strong id="injectedText">0원</strong>
+          </div>
+          <div class="metric">
+            <span>외부 세후 연이율</span>
+            <strong id="afterTaxRateText">0.00%</strong>
+          </div>
+          <div class="metric">
+            <span>손익분기 세전 연이율</span>
+            <strong id="breakEvenText">계산 중</strong>
+          </div>
+          <div class="metric">
+            <span>계산 종료일</span>
+            <strong id="endDateText">-</strong>
+          </div>
+        </div>
+        <div class="bar-compare" aria-label="최종 외부 현금 비교">
+          <div class="bar-row">
+            <span>도약 유지</span>
+            <div class="bar-track"><div id="keepBar" class="bar-fill keep"></div></div>
+            <strong id="keepFinalText">0원</strong>
+          </div>
+          <div class="bar-row">
+            <span>미래 전환</span>
+            <div class="bar-track"><div id="switchBar" class="bar-fill switch"></div></div>
+            <strong id="switchFinalText">0원</strong>
+          </div>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="계산기 탭">
+        <button class="tab is-active" type="button" data-tab="inputs">계산 입력</button>
+        <button class="tab" type="button" data-tab="history">납입 이력</button>
+        <button class="tab" type="button" data-tab="rates">우대금리 확인</button>
+        <button class="tab" type="button" data-tab="details">계산 상세</button>
+        <button class="tab" type="button" data-tab="logic">사용된 논리</button>
+      </nav>
+
+      <section class="tab-panel is-active" id="tab-inputs">
+        <div class="form-grid">
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>기본 일정과 납입</h2>
+              <div class="button-row">
+                <button class="secondary-button" id="regenerateHistory" type="button">납입 이력 자동 생성</button>
+                <button class="secondary-button" id="resetSavedState" type="button">저장값 초기화</button>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label>
+                청년도약계좌 가입일
+                <input id="youthLeapSignupDate" type="date" />
+              </label>
+              <label>
+                청년도약계좌 해지일
+                <input id="youthLeapExitDate" type="date" />
+              </label>
+              <label>
+                청년미래적금 가입일
+                <input id="youthFutureStartDate" type="date" />
+              </label>
+              <label>
+                기본 입금일
+                <input id="paymentDay" type="number" min="1" max="31" step="1" />
+              </label>
+              <label>
+                자동 생성 납입금액
+                <input id="historyMonthlyAmount" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                향후 월납입 설정금액
+                <input id="futureMonthlyAmount" type="number" min="0" step="1000" />
+              </label>
+            </div>
+            <p class="hint">청년미래적금은 공식 월 한도에 맞춰 설정금액과 무관하게 월 50만원까지만 반영됩니다.</p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>금리와 외부 돈</h2>
+            </div>
+            <div class="field-grid">
+              <label>
+                도약 특별중도해지 금리(%)
+                <input id="youthLeapSpecialRate" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 만기 금리 1~36개월(%)
+                <input id="youthLeapMaturityRate" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 만기 금리 37~48개월(%)
+                <input id="youthLeapMaturityRateYear4" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 만기 금리 49~60개월(%)
+                <input id="youthLeapMaturityRateYear5" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 기여금 이자 금리 1~36개월(%)
+                <input id="youthLeapContributionRate" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 기여금 이자 금리 37~48개월(%)
+                <input id="youthLeapContributionRateYear4" type="number" step="0.01" />
+              </label>
+              <label>
+                도약 기여금 이자 금리 49~60개월(%)
+                <input id="youthLeapContributionRateYear5" type="number" step="0.01" />
+              </label>
+              <label>
+                미래적금 적용 금리(%)
+                <input id="youthFutureRate" type="number" step="0.01" />
+              </label>
+              <label>
+                외부 돈 세전 연이율(%)
+                <input id="externalPreTaxRate" type="number" step="0.01" />
+              </label>
+              <label>
+                미래적금 정부기여금
+                <select id="futureContributionType"></select>
+              </label>
+            </div>
+            <div class="inline-readout">
+              <span>외부 돈은 15.4% 과세 후 세후 연이율 <strong id="afterTaxInline">0.00%</strong>로 계산됩니다.</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>도약 소득구간</h2>
+            </div>
+            <div class="income-grid" id="incomeBracketFields"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>가입은행 우대조건</h2>
+            </div>
+            <label class="wide-label">
+              청년미래적금 가입은행
+              <select id="bankSelect"></select>
+            </label>
+            <div class="bank-box" id="selectedBankDetails"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-history">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>청년도약계좌 납입 이력</h2>
+              <p class="panel-subtitle">해지일까지의 납입을 기준으로 특별중도해지 지급액을 계산합니다.</p>
+            </div>
+            <button class="primary-button" id="addPaymentRow" type="button">행 추가</button>
+          </div>
+          <div class="warning-list" id="limitWarnings"></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>납입일</th>
+                  <th>금액</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="paymentRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-rates">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>청년미래적금 은행별 우대금리</h2>
+              <p class="panel-subtitle" id="rateAsOfText"></p>
+            </div>
+            <input class="search-input" id="bankSearch" type="search" placeholder="은행명 또는 조건 검색" />
+          </div>
+          <div class="bank-list" id="bankList"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="tab-details">
+        <div class="details-grid">
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>지급액 구성</h2>
+            </div>
+            <div class="component-list" id="componentList"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>추가 납입필요 내역</h2>
+            </div>
+            <div id="injectionList" class="event-list"></div>
+          </section>
+          <section class="panel panel-wide">
+            <div class="panel-heading">
+              <h2>계산 기준</h2>
+            </div>
+            <div id="sourceList" class="source-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-logic">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>사용된 계산 논리</h2>
+              <p class="panel-subtitle">현재 입력값으로 계산할 때 적용되는 규칙과 가정을 정리합니다.</p>
+            </div>
+          </div>
+          <div id="logicList" class="logic-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,3 @@
+temp/
+.playwright-mcp/
+node_modules/
