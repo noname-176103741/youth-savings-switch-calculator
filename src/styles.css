@@ -388,6 +388,11 @@ label,
   width: min(560px, calc(100vw - 48px));
 }
 
+.help-panel--align-left {
+  right: auto;
+  left: 0;
+}
+
 .help-wrap:hover .help-panel,
 .help-wrap:focus-within .help-panel {
   visibility: visible;
@@ -777,6 +782,11 @@ button:focus-visible {
     left: 10px;
     width: auto;
     max-height: min(68vh, 520px);
+  }
+
+  .help-panel--align-left {
+    right: 10px;
+    left: 10px;
   }
 
   .help-close {
