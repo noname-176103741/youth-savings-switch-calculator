@@ -147,6 +147,24 @@ test("youth future contribution types apply rate and cap", () => {
   assert.equal(calculateYouthFutureContribution(500000, "none"), 0);
 });
 
+test("default rate assumptions follow the input field order", () => {
+  assert.deepEqual(
+    [
+      DEFAULT_SETTINGS.youthLeapSpecialRate,
+      DEFAULT_SETTINGS.youthLeapMaturityRate,
+      DEFAULT_SETTINGS.youthLeapMaturityRateYear4,
+      DEFAULT_SETTINGS.youthLeapMaturityRateYear5,
+      DEFAULT_SETTINGS.youthLeapContributionRate,
+      DEFAULT_SETTINGS.youthLeapContributionRateYear4,
+      DEFAULT_SETTINGS.youthLeapContributionRateYear5,
+      DEFAULT_SETTINGS.youthFutureRate,
+      DEFAULT_SETTINGS.youthFutureContributionRate,
+      DEFAULT_SETTINGS.externalPreTaxRate,
+    ],
+    [5.5, 6, 4.5, 4.5, 4.5, 3, 3, 8, 5, 4.5],
+  );
+});
+
 test("youth future contribution interest uses a separate contribution rate", () => {
   const result = calculateComparison(
     {

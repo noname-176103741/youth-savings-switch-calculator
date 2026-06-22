@@ -6,13 +6,14 @@ import {
   generateYouthLeapPayments,
   taxAdjustedAnnualRate,
   validateYouthLeapPayments,
-} from "./calc.js?v=default-rates-20260619";
+} from "./calc.js?v=rate-tooltips-20260622";
 import {
   SOURCE_LINKS,
   YOUTH_FUTURE_BANKS,
   YOUTH_FUTURE_RULES,
   YOUTH_LEAP_CONTRIBUTION_SNAPSHOT,
-} from "./data.js?v=default-rates-20260619";
+  YOUTH_LEAP_LINKED_EXIT_RATE_NOTES,
+} from "./data.js?v=rate-tooltips-20260622";
 
 const els = {
   inputs: {
@@ -61,6 +62,7 @@ const els = {
   calculateButton: document.querySelector("#calculateButton"),
   calcStatus: document.querySelector("#calcStatus"),
   summaryBand: document.querySelector(".summary-band"),
+  linkedExitRateHelp: document.querySelector("#linkedExitRateHelp"),
 };
 
 let paymentRows = [];
@@ -87,6 +89,7 @@ function init() {
   renderIncomeFields();
   renderBankOptions();
   renderSources();
+  renderLinkedExitRateHelp();
   const savedState = readSavedState();
   if (savedState) {
     applySavedState(savedState);
@@ -168,6 +171,21 @@ function bindEvents() {
     saveState();
   });
   els.bankSearch.addEventListener("input", renderBankList);
+
+  document.querySelectorAll(".help-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const panel = document.getElementById(button.getAttribute("aria-describedby"));
+      panel?.classList.remove("is-closed");
+    });
+  });
+  document.querySelectorAll(".help-close").forEach((button) => {
+    button.addEventListener("click", () => {
+      const panel = button.closest(".help-panel");
+      panel?.classList.add("is-closed");
+      panel?.closest(".help-wrap")?.querySelector(".help-button")?.blur();
+      button.blur();
+    });
+  });
 
   document.querySelector("#regenerateHistory").addEventListener("click", () => {
     paymentRows = generateYouthLeapPayments(getSettings());
@@ -564,6 +582,30 @@ function renderSources() {
       (source) =>
         `<div class="source-item"><a href="${source.url}" target="_blank" rel="noopener noreferrer">${source.label}</a></div>`,
     ).join("")}
+  `;
+}
+
+function renderLinkedExitRateHelp() {
+  els.linkedExitRateHelp.innerHTML = `
+    <div class="help-panel-head">
+      <div class="help-title">연계가입 특별중도해지 우대금리 적용 정리</div>
+      <button class="help-close" type="button" aria-label="은행별 기준 닫기">닫기</button>
+    </div>
+    <p class="help-summary">확인된 은행은 청년미래적금 연계가입 특별중도해지에도 가입유지기간 우대금리를 인정합니다. 실적형 조건은 보통 해지 이후 만기까지 충족한 것으로 보되, 해지 전 실적이 전혀 없으면 제외됩니다.</p>
+    <div class="help-note-grid">
+      ${YOUTH_LEAP_LINKED_EXIT_RATE_NOTES.map(
+        (item) => `
+          <section class="help-note">
+            <div class="help-note-head">
+              <strong>${escapeHtml(item.bank)}</strong>
+              <span class="status-pill ${escapeAttr(item.statusType)}">${escapeHtml(item.status)}</span>
+            </div>
+            <p>${escapeHtml(item.summary)}</p>
+            <small>${escapeHtml(item.source)}</small>
+          </section>
+        `,
+      ).join("")}
+    </div>
   `;
 }
 
