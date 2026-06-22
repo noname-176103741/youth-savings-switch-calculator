@@ -10,6 +10,8 @@ import {
   findBreakEvenPreTaxRate,
   generateScenarioPayments,
   generateYouthLeapPayments,
+  normalizePayments,
+  parseDate,
   scheduledDateForMonth,
   taxAdjustedAnnualRate,
   validateYouthLeapPayments,
@@ -163,6 +165,37 @@ test("default rate assumptions follow the input field order", () => {
     ],
     [5.5, 6, 4.5, 4.5, 4.5, 3, 3, 8, 5, 4.5],
   );
+});
+
+test("strict date parsing rejects malformed and overflow dates", () => {
+  assert.throws(() => parseDate("2026-99-99", "테스트 날짜"), /존재하지 않는 날짜/);
+  assert.throws(() => parseDate("", "테스트 날짜"), /형식이 올바르지 않습니다/);
+});
+
+test("calculation rejects invalid numeric settings and payment rows", () => {
+  assert.throws(
+    () =>
+      calculateComparison(
+        {
+          ...DEFAULT_SETTINGS,
+          youthLeapSpecialRate: "abc",
+        },
+        [],
+      ),
+    /도약 특별중도해지 금리 범위를 확인하세요/,
+  );
+  assert.throws(
+    () =>
+      calculateComparison(
+        {
+          ...DEFAULT_SETTINGS,
+          futureMonthlyAmount: 100000001,
+        },
+        [],
+      ),
+    /향후 월납입 설정금액 범위를 확인하세요/,
+  );
+  assert.throws(() => normalizePayments([{ id: "bad", date: "2026-02-31", amount: 700000 }]), /납입일/);
 });
 
 test("youth future contribution interest uses a separate contribution rate", () => {

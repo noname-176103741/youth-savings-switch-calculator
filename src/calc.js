@@ -7,6 +7,7 @@ export const YOUTH_FUTURE_DEFAULT_CONTRIBUTION_RATE = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const EXPANDED_LEAP_CONTRIBUTION_START = parseDate("2025-01-01");
+const MAX_REASONABLE_AMOUNT = 100000000;
 
 export const INCOME_BRACKETS = [
   {
@@ -90,12 +91,22 @@ export const DEFAULT_SETTINGS = {
   incomeBracketsByYear: ["lte3600", "lte3600", "lte3600", "lte3600", "lte3600"],
 };
 
-export function parseDate(value) {
+export function parseDate(value, fieldName = "날짜") {
   if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) {
+      throw new Error(`${fieldName}가 존재하지 않는 날짜입니다.`);
+    }
     return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
   }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    throw new Error(`${fieldName} 형식이 올바르지 않습니다.`);
+  }
   const [year, month, day] = String(value).split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    throw new Error(`${fieldName}가 존재하지 않는 날짜입니다.`);
+  }
+  return date;
 }
 
 export function formatDate(date) {
@@ -753,47 +764,83 @@ function buildBreakEven(preTaxRate) {
   };
 }
 
-function coerceSettings(input) {
+function coerceSettings(input = {}) {
+  const incomeBracketIds = new Set(INCOME_BRACKETS.map((bracket) => bracket.id));
+  const incomeBracketsByYear =
+    Array.isArray(input.incomeBracketsByYear) && input.incomeBracketsByYear.length
+      ? DEFAULT_SETTINGS.incomeBracketsByYear.map((defaultValue, index) =>
+          incomeBracketIds.has(input.incomeBracketsByYear[index]) ? input.incomeBracketsByYear[index] : defaultValue,
+        )
+      : DEFAULT_SETTINGS.incomeBracketsByYear;
+
   return {
     ...DEFAULT_SETTINGS,
     ...input,
-    paymentDay: clampDay(input.paymentDay),
-    historyMonthlyAmount: normalizeAmount(input.historyMonthlyAmount),
-    futureMonthlyAmount: normalizeAmount(input.futureMonthlyAmount),
-    youthLeapSpecialRate: Number(input.youthLeapSpecialRate ?? DEFAULT_SETTINGS.youthLeapSpecialRate),
-    youthLeapMaturityRate: Number(input.youthLeapMaturityRate ?? DEFAULT_SETTINGS.youthLeapMaturityRate),
-    youthLeapMaturityRateYear4: Number(
+    youthLeapSignupDate: formatDate(parseDate(input.youthLeapSignupDate ?? DEFAULT_SETTINGS.youthLeapSignupDate, "청년도약계좌 가입일")),
+    youthLeapExitDate: formatDate(parseDate(input.youthLeapExitDate ?? DEFAULT_SETTINGS.youthLeapExitDate, "청년도약계좌 해지일")),
+    youthFutureStartDate: formatDate(parseDate(input.youthFutureStartDate ?? DEFAULT_SETTINGS.youthFutureStartDate, "청년미래적금 가입일")),
+    paymentDay: finiteNumber(input.paymentDay ?? DEFAULT_SETTINGS.paymentDay, "기본 입금일", {
+      min: 1,
+      max: 31,
+      integer: true,
+    }),
+    historyMonthlyAmount: finiteAmount(
+      input.historyMonthlyAmount ?? DEFAULT_SETTINGS.historyMonthlyAmount,
+      "자동 생성 납입금액",
+    ),
+    futureMonthlyAmount: finiteAmount(input.futureMonthlyAmount ?? DEFAULT_SETTINGS.futureMonthlyAmount, "향후 월납입 설정금액"),
+    youthLeapSpecialRate: finiteRate(
+      input.youthLeapSpecialRate ?? DEFAULT_SETTINGS.youthLeapSpecialRate,
+      "도약 특별중도해지 금리",
+    ),
+    youthLeapMaturityRate: finiteRate(
+      input.youthLeapMaturityRate ?? DEFAULT_SETTINGS.youthLeapMaturityRate,
+      "도약 만기 금리 1~36개월",
+    ),
+    youthLeapMaturityRateYear4: finiteRate(
       input.youthLeapMaturityRateYear4 ?? DEFAULT_SETTINGS.youthLeapMaturityRateYear4,
+      "도약 만기 금리 37~48개월",
     ),
-    youthLeapMaturityRateYear5: Number(
+    youthLeapMaturityRateYear5: finiteRate(
       input.youthLeapMaturityRateYear5 ?? DEFAULT_SETTINGS.youthLeapMaturityRateYear5,
+      "도약 만기 금리 49~60개월",
     ),
-    youthLeapContributionRate: Number(input.youthLeapContributionRate ?? DEFAULT_SETTINGS.youthLeapContributionRate),
-    youthLeapContributionRateYear4: Number(
+    youthLeapContributionRate: finiteRate(
+      input.youthLeapContributionRate ?? DEFAULT_SETTINGS.youthLeapContributionRate,
+      "도약 기여금 이자 금리 1~36개월",
+    ),
+    youthLeapContributionRateYear4: finiteRate(
       input.youthLeapContributionRateYear4 ?? DEFAULT_SETTINGS.youthLeapContributionRateYear4,
+      "도약 기여금 이자 금리 37~48개월",
     ),
-    youthLeapContributionRateYear5: Number(
+    youthLeapContributionRateYear5: finiteRate(
       input.youthLeapContributionRateYear5 ?? DEFAULT_SETTINGS.youthLeapContributionRateYear5,
+      "도약 기여금 이자 금리 49~60개월",
     ),
-    youthFutureRate: Number(input.youthFutureRate ?? DEFAULT_SETTINGS.youthFutureRate),
-    youthFutureContributionRate: Number(
+    youthFutureRate: finiteRate(input.youthFutureRate ?? DEFAULT_SETTINGS.youthFutureRate, "미래적금 적용 금리"),
+    youthFutureContributionRate: finiteRate(
       input.youthFutureContributionRate ?? DEFAULT_SETTINGS.youthFutureContributionRate,
+      "미래적금 기여금 이자 금리",
     ),
-    externalPreTaxRate: Number(input.externalPreTaxRate ?? DEFAULT_SETTINGS.externalPreTaxRate),
-    incomeBracketsByYear:
-      Array.isArray(input.incomeBracketsByYear) && input.incomeBracketsByYear.length
-        ? input.incomeBracketsByYear
-        : DEFAULT_SETTINGS.incomeBracketsByYear,
+    externalPreTaxRate: finiteNumber(input.externalPreTaxRate ?? DEFAULT_SETTINGS.externalPreTaxRate, "외부 돈 세전 연이율", {
+      min: -100,
+      max: 100,
+    }),
+    futureContributionType: FUTURE_CONTRIBUTION_TYPES[input.futureContributionType]
+      ? input.futureContributionType
+      : DEFAULT_SETTINGS.futureContributionType,
+    incomeBracketsByYear,
   };
 }
 
 export function normalizePayments(rows) {
+  const sourceRows = Array.isArray(rows) ? rows : [];
   return sortPayments(
-    rows
+    sourceRows
       .map((row, index) => ({
         id: row.id || `row-${index}`,
-        date: formatDate(parseDate(row.date)),
-        amount: normalizeAmount(row.amount),
+        date: formatDate(parseDate(row.date, "납입일")),
+        amount: finiteAmount(row.amount, "납입금액"),
       }))
       .filter((row) => Number.isFinite(row.amount) && row.amount > 0),
   );
@@ -817,4 +864,26 @@ function normalizeAmount(value) {
 
 function clampDay(value) {
   return Math.min(31, Math.max(1, Math.round(Number(value || 1))));
+}
+
+function finiteAmount(value, fieldName) {
+  return Math.round(finiteNumber(value, fieldName, { min: 0, max: MAX_REASONABLE_AMOUNT }));
+}
+
+function finiteRate(value, fieldName) {
+  return finiteNumber(value, fieldName, { min: 0, max: 100 });
+}
+
+function finiteNumber(value, fieldName, { min = -Infinity, max = Infinity, integer = false } = {}) {
+  if (value === "" || value === null || value === undefined) {
+    throw new Error(`${fieldName} 값을 입력하세요.`);
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < min || number > max) {
+    throw new Error(`${fieldName} 범위를 확인하세요.`);
+  }
+  if (integer && !Number.isInteger(number)) {
+    throw new Error(`${fieldName}은 정수로 입력하세요.`);
+  }
+  return number;
 }

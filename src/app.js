@@ -210,8 +210,12 @@ function bindEvents() {
 
 function handleSettingsInput(key) {
   if (HISTORY_DRIVER_FIELDS.has(key) && !paymentRowsTouched) {
-    paymentRows = generateYouthLeapPayments(getSettings());
-    renderPaymentRows();
+    try {
+      paymentRows = generateYouthLeapPayments(getSettings());
+      renderPaymentRows();
+    } catch {
+      // The user may be midway through editing a date; the explicit calculation step will report the error.
+    }
   }
   renderAfterTaxInline(getSettings());
   markCalculationStale();
@@ -234,19 +238,19 @@ function getSettings() {
     youthLeapSignupDate: els.inputs.youthLeapSignupDate.value,
     youthLeapExitDate: els.inputs.youthLeapExitDate.value,
     youthFutureStartDate: els.inputs.youthFutureStartDate.value,
-    paymentDay: Number(els.inputs.paymentDay.value),
-    historyMonthlyAmount: Number(els.inputs.historyMonthlyAmount.value),
-    futureMonthlyAmount: Number(els.inputs.futureMonthlyAmount.value),
-    youthLeapSpecialRate: Number(els.inputs.youthLeapSpecialRate.value),
-    youthLeapMaturityRate: Number(els.inputs.youthLeapMaturityRate.value),
-    youthLeapMaturityRateYear4: Number(els.inputs.youthLeapMaturityRateYear4.value),
-    youthLeapMaturityRateYear5: Number(els.inputs.youthLeapMaturityRateYear5.value),
-    youthLeapContributionRate: Number(els.inputs.youthLeapContributionRate.value),
-    youthLeapContributionRateYear4: Number(els.inputs.youthLeapContributionRateYear4.value),
-    youthLeapContributionRateYear5: Number(els.inputs.youthLeapContributionRateYear5.value),
-    youthFutureRate: Number(els.inputs.youthFutureRate.value),
-    youthFutureContributionRate: Number(els.inputs.youthFutureContributionRate.value),
-    externalPreTaxRate: Number(els.inputs.externalPreTaxRate.value),
+    paymentDay: els.inputs.paymentDay.value,
+    historyMonthlyAmount: els.inputs.historyMonthlyAmount.value,
+    futureMonthlyAmount: els.inputs.futureMonthlyAmount.value,
+    youthLeapSpecialRate: els.inputs.youthLeapSpecialRate.value,
+    youthLeapMaturityRate: els.inputs.youthLeapMaturityRate.value,
+    youthLeapMaturityRateYear4: els.inputs.youthLeapMaturityRateYear4.value,
+    youthLeapMaturityRateYear5: els.inputs.youthLeapMaturityRateYear5.value,
+    youthLeapContributionRate: els.inputs.youthLeapContributionRate.value,
+    youthLeapContributionRateYear4: els.inputs.youthLeapContributionRateYear4.value,
+    youthLeapContributionRateYear5: els.inputs.youthLeapContributionRateYear5.value,
+    youthFutureRate: els.inputs.youthFutureRate.value,
+    youthFutureContributionRate: els.inputs.youthFutureContributionRate.value,
+    externalPreTaxRate: els.inputs.externalPreTaxRate.value,
     futureContributionType: els.inputs.futureContributionType.value,
     incomeBracketsByYear: Array.from(document.querySelectorAll(".income-bracket")).map(
       (select) => select.value,
@@ -353,9 +357,9 @@ function renderPaymentRows() {
   els.paymentRows.innerHTML = paymentRows
     .map(
       (row) => `
-        <tr data-id="${row.id}">
-          <td><input type="date" value="${row.date}" data-field="date" aria-label="납입일" /></td>
-          <td><input type="number" min="0" step="1000" value="${row.amount}" data-field="amount" aria-label="납입금액" /></td>
+        <tr data-id="${escapeAttr(row.id)}">
+          <td><input type="date" value="${escapeAttr(row.date)}" data-field="date" aria-label="납입일" /></td>
+          <td><input type="number" min="0" step="1000" value="${escapeAttr(row.amount)}" data-field="amount" aria-label="납입금액" /></td>
           <td><button class="danger-button" type="button" data-action="delete">삭제</button></td>
         </tr>
       `,
@@ -432,15 +436,16 @@ function renderBankList() {
 function recalculate() {
   const settings = getSettings();
   renderAfterTaxInline(settings);
-
-  const validation = validateYouthLeapPayments(paymentRows, settings.youthLeapSignupDate);
-  renderValidation(validation);
+  let validation = { issues: [] };
 
   try {
+    validation = validateYouthLeapPayments(paymentRows, settings.youthLeapSignupDate);
+    renderValidation(validation);
     lastResult = calculateComparison(settings, paymentRows);
     renderResult(lastResult);
   } catch (error) {
     lastResult = null;
+    renderValidation(validation);
     els.winnerText.textContent = "입력값 확인 필요";
     els.winnerCaption.textContent = error.message;
   } finally {
