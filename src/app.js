@@ -6,14 +6,14 @@ import {
   generateYouthLeapPayments,
   taxAdjustedAnnualRate,
   validateYouthLeapPayments,
-} from "./calc.js?v=rate-tooltips-20260622";
+} from "./calc.js?v=july-contribution-20260622";
 import {
   SOURCE_LINKS,
   YOUTH_FUTURE_BANKS,
   YOUTH_FUTURE_RULES,
   YOUTH_LEAP_CONTRIBUTION_SNAPSHOT,
   YOUTH_LEAP_LINKED_EXIT_RATE_NOTES,
-} from "./data.js?v=rate-tooltips-20260622";
+} from "./data.js?v=july-contribution-20260622";
 
 const els = {
   inputs: {

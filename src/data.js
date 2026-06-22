@@ -1,4 +1,4 @@
-import { INCOME_BRACKETS } from "./calc.js?v=rate-tooltips-20260622";
+import { INCOME_BRACKETS } from "./calc.js?v=july-contribution-20260622";
 
 export const SOURCE_LINKS = [
   {
